@@ -1,0 +1,58 @@
+--------------------------------------------------------------------------------------------------------
+| Id  | Operation                                | Name                   |    TQ  |IN-OUT| PQ Distrib |
+--------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT                         |                        |        |      |            |
+|*  1 |  VIEW                                    |                        |        |      |            |
+|*  2 |   WINDOW SORT PUSHED RANK                |                        |        |      |            |
+|   3 |    VIEW                                  |                        |        |      |            |
+|   4 |     SORT UNIQUE                          |                        |        |      |            |
+|*  5 |      VIEW                                |                        |        |      |            |
+|   6 |       WINDOW SORT                        |                        |        |      |            |
+|   7 |        MERGE JOIN OUTER                  |                        |        |      |            |
+|   8 |         SORT JOIN                        |                        |        |      |            |
+|   9 |          VIEW                            |                        |        |      |            |
+|  10 |           SORT UNIQUE                    |                        |        |      |            |
+|  11 |            WINDOW SORT                   |                        |        |      |            |
+|  12 |             WINDOW SORT                  |                        |        |      |            |
+|* 13 |              FILTER                      |                        |        |      |            |
+|  14 |               MERGE JOIN OUTER           |                        |        |      |            |
+|  15 |                SORT JOIN                 |                        |        |      |            |
+|  16 |                 FIXED TABLE FULL         | X$KCCRSR               |        |      |            |
+|* 17 |                SORT JOIN                 |                        |        |      |            |
+|  18 |                 VIEW                     |                        |        |      |            |
+|  19 |                  MERGE JOIN OUTER        |                        |        |      |            |
+|  20 |                   SORT JOIN              |                        |        |      |            |
+|  21 |                    PX COORDINATOR        |                        |        |      |            |
+|  22 |                     PX SEND QC (RANDOM)  | :TQ10000               |  Q1,00 | P->S | QC (RAND)  |
+|  23 |                      VIEW                | GV$RMAN_STATUS_CURRENT |  Q1,00 | PCWP |            |
+|* 24 |                       FIXED TABLE FULL   | X$KRBMRST              |  Q1,00 | PCWP |            |
+|* 25 |                   SORT JOIN              |                        |        |      |            |
+|  26 |                    VIEW                  |                        |        |      |            |
+|  27 |                     SORT GROUP BY        |                        |        |      |            |
+|  28 |                      PX COORDINATOR      |                        |        |      |            |
+|  29 |                       PX SEND QC (RANDOM)| :TQ20000               |  Q2,00 | P->S | QC (RAND)  |
+|  30 |                        VIEW              | GV$KSFQP               |  Q2,00 | PCWP |            |
+|  31 |                         FIXED TABLE FULL | X$KSFQP                |  Q2,00 | PCWP |            |
+|* 32 |         SORT JOIN                        |                        |        |      |            |
+|  33 |          VIEW                            |                        |        |      |            |
+|  34 |           SORT GROUP BY                  |                        |        |      |            |
+|* 35 |            FILTER                        |                        |        |      |            |
+|  36 |             MERGE JOIN OUTER             |                        |        |      |            |
+|  37 |              SORT JOIN                   |                        |        |      |            |
+|  38 |               FIXED TABLE FULL           | X$KCCRSR               |        |      |            |
+|* 39 |              SORT JOIN                   |                        |        |      |            |
+|  40 |               VIEW                       |                        |        |      |            |
+|  41 |                MERGE JOIN OUTER          |                        |        |      |            |
+|  42 |                 SORT JOIN                |                        |        |      |            |
+|  43 |                  PX COORDINATOR          |                        |        |      |            |
+|  44 |                   PX SEND QC (RANDOM)    | :TQ30000               |  Q3,00 | P->S | QC (RAND)  |
+|  45 |                    VIEW                  | GV$RMAN_STATUS_CURRENT |  Q3,00 | PCWP |            |
+|* 46 |                     FIXED TABLE FULL     | X$KRBMRST              |  Q3,00 | PCWP |            |
+|* 47 |                 SORT JOIN                |                        |        |      |            |
+|  48 |                  VIEW                    |                        |        |      |            |
+|  49 |                   SORT GROUP BY          |                        |        |      |            |
+|  50 |                    PX COORDINATOR        |                        |        |      |            |
+|  51 |                     PX SEND QC (RANDOM)  | :TQ40000               |  Q4,00 | P->S | QC (RAND)  |
+|  52 |                      VIEW                | GV$KSFQP               |  Q4,00 | PCWP |            |
+|  53 |                       FIXED TABLE FULL   | X$KSFQP                |  Q4,00 | PCWP |            |
+--------------------------------------------------------------------------------------------------------
