@@ -82,7 +82,6 @@ public class MainFrame extends JFrame {
     }
 
     private void downloadTemplate() {
-
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setDialogTitle("保存执行计划模板");
         fileChooser.setSelectedFile(new File("plan.txt"));
@@ -90,23 +89,23 @@ public class MainFrame extends JFrame {
         int result = fileChooser.showSaveDialog(this);
 
         if (result == JFileChooser.APPROVE_OPTION) {
-            File file = fileChooser.getSelectedFile();
+            File targetFile = fileChooser.getSelectedFile();
 
-            File source = new File("plan.txt"); // 项目根目录下的模板文件
+            // 使用 ClassLoader 从资源路径加载 plan.txt
+            InputStream inputStream = getClass().getClassLoader().getResourceAsStream("resources/template/plan.txt");
 
-            if (!source.exists()) {
+            if (inputStream == null) {
                 JOptionPane.showMessageDialog(this,
-                        "项目根目录未找到 plan.txt 模板文件！",
+                        "未找到资源文件 plan.txt！",
                         "错误",
                         JOptionPane.ERROR_MESSAGE);
                 return;
             }
 
             try (
-                    BufferedReader reader = new BufferedReader(new FileReader(source));
-                    BufferedWriter writer = new BufferedWriter(new FileWriter(file))
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+                    BufferedWriter writer = new BufferedWriter(new FileWriter(targetFile))
             ) {
-
                 String line;
                 while ((line = reader.readLine()) != null) {
                     writer.write(line);
@@ -119,7 +118,6 @@ public class MainFrame extends JFrame {
                         JOptionPane.INFORMATION_MESSAGE);
 
             } catch (Exception ex) {
-
                 JOptionPane.showMessageDialog(this,
                         "下载失败：" + ex.getMessage(),
                         "错误",
@@ -127,7 +125,6 @@ public class MainFrame extends JFrame {
             }
         }
     }
-
 
     private void showAbout() {
 

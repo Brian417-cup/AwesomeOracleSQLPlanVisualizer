@@ -6,6 +6,8 @@ import javax.swing.*;
 import javax.swing.tree.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,6 +17,10 @@ public class PlanVisualizer extends JPanel {
     private JTable table;
     private DefaultTableModel tableModel;
     private JTextArea executionOrderArea;
+    private JTable executionOrderTable;
+    private DefaultTableModel executionOrderTableModel;
+    private List<PlanNode> executionOrderList; // 保存执行顺序列表
+
 
     public PlanVisualizer() {
 
@@ -38,14 +44,19 @@ public class PlanVisualizer extends JPanel {
 
         JScrollPane tableScrollPane = new JScrollPane(table);
 
-        // ===== 新增：执行顺序区域 =====
-        executionOrderArea = new JTextArea();
-        executionOrderArea.setEditable(false);
-        executionOrderArea.setFont(new Font("Monospaced", Font.PLAIN, 13));
+        // ===== 右下方：执行顺序区域展示 =====
+        // ===== 新增：执行顺序表格 =====
+        String[] orderColumns = {"执行顺序"};
+        executionOrderTableModel = new DefaultTableModel(orderColumns, 0);
+        executionOrderTable = new JTable(executionOrderTableModel);
+        executionOrderTable.setDefaultEditor(Object.class, null); // 禁止编辑
+        executionOrderTable.setRowHeight(24);
+        executionOrderTable.setFillsViewportHeight(true);
+        executionOrderTable.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
 
-        JScrollPane orderScrollPane = new JScrollPane(executionOrderArea);
+        JScrollPane orderScrollPane = new JScrollPane(executionOrderTable);
 
-        // ===== 右侧上下分割（新增的关键）=====
+        // ===== 右侧整体：上下分割（新增的关键）=====
         JSplitPane rightSplitPane = new JSplitPane(
                 JSplitPane.VERTICAL_SPLIT,
                 tableScrollPane,
@@ -68,6 +79,19 @@ public class PlanVisualizer extends JPanel {
 
         // 👇 监听树节点点击
         tree.addTreeSelectionListener(e -> onNodeSelected());
+
+//        右下方的表格执行顺序点击事件（绑定对树形控件对应节点选中）
+        executionOrderTable.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                int selectedRow = executionOrderTable.getSelectedRow();
+                if (selectedRow >= 0 && selectedRow < executionOrderList.size()) {
+                    PlanNode selectedNode = executionOrderList.get(selectedRow);
+                    selectTreeNode(selectedNode);
+                }
+            }
+        });
+
     }
 
     public void loadPlan(PlanNode root) {
@@ -88,14 +112,12 @@ public class PlanVisualizer extends JPanel {
         generateExecutionOrder(root);
     }
 
+    //    树形控件节点点击事件
     private void onNodeSelected() {
-
         TreePath path = tree.getSelectionPath();
         if (path == null) return;
 
-        DefaultMutableTreeNode node =
-                (DefaultMutableTreeNode) path.getLastPathComponent();
-
+        DefaultMutableTreeNode node = (DefaultMutableTreeNode) path.getLastPathComponent();
         Object obj = node.getUserObject();
 
         if (!(obj instanceof PlanNode)) return;
@@ -116,7 +138,46 @@ public class PlanVisualizer extends JPanel {
         addRow("TQ", planNode.getTq());
         addRow("IN-OUT", planNode.getInOut());
         addRow("PQ Distrib", planNode.getPqDistrib());
+
+        // 查找并高亮执行顺序表格中的对应行
+        int rowIndex = executionOrderList.indexOf(planNode);
+        if (rowIndex >= 0) {
+            executionOrderTable.setRowSelectionInterval(rowIndex, rowIndex);
+            executionOrderTable.scrollRectToVisible(executionOrderTable.getCellRect(rowIndex, 0, true));
+        }
     }
+
+    //    执行顺序表格项点击事件
+    private void selectTreeNode(PlanNode targetNode) {
+        DefaultTreeModel model = (DefaultTreeModel) tree.getModel();
+        DefaultMutableTreeNode rootNode = (DefaultMutableTreeNode) model.getRoot();
+
+        // 递归查找目标节点
+        DefaultMutableTreeNode treeNode = findTreeNode(rootNode, targetNode);
+        if (treeNode != null) {
+            TreePath path = new TreePath(model.getPathToRoot(treeNode));
+            tree.setSelectionPath(path); // 选中节点
+            tree.scrollPathToVisible(path); // 滚动到可视区域
+        }
+    }
+
+    // 递归查找树节点
+    private DefaultMutableTreeNode findTreeNode(DefaultMutableTreeNode parent, PlanNode targetNode) {
+        if (parent.getUserObject() == targetNode) {
+            return parent;
+        }
+
+        for (int i = 0; i < parent.getChildCount(); i++) {
+            DefaultMutableTreeNode child = (DefaultMutableTreeNode) parent.getChildAt(i);
+            DefaultMutableTreeNode result = findTreeNode(child, targetNode);
+            if (result != null) {
+                return result;
+            }
+        }
+
+        return null;
+    }
+
 
     private void addRow(String key, String value) {
         if (value == null) value = "";
@@ -141,32 +202,29 @@ public class PlanVisualizer extends JPanel {
         }
     }
 
-//    后序遍历顺序展示
+    //    后序遍历顺序展示
     private void generateExecutionOrder(PlanNode root) {
-
         if (root == null) {
-            executionOrderArea.setText("");
+            executionOrderTableModel.setRowCount(0); // 清空表格
+            executionOrderList = new ArrayList<>(); // 清空执行顺序列表
             return;
         }
 
-        StringBuilder sb = new StringBuilder();
-        List<PlanNode> orderList = new ArrayList<>();
+        executionOrderList = new ArrayList<>();
+        postOrder(root, executionOrderList);
 
-        postOrder(root, orderList);
+        // 清空旧数据
+        executionOrderTableModel.setRowCount(0);
 
-        sb.append("执行顺序（自底向上）：\n\n");
-
+        // 填充新数据
         int step = 1;
-        for (PlanNode node : orderList) {
-
-            sb.append(String.format("%3d. ID=%s  Operation=%s\n",
-                    step++,
-                    node.getId(),
-                    node.getOperation()));
+        for (PlanNode node : executionOrderList) {
+            String orderInfo = String.format("%3d. ID=%s  Operation=%s",
+                    step++, node.getId(), node.getOperation());
+            executionOrderTableModel.addRow(new Object[]{orderInfo});
         }
-
-        executionOrderArea.setText(sb.toString());
     }
+
 
     private void postOrder(PlanNode node, List<PlanNode> list) {
 

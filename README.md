@@ -1,5 +1,8 @@
 # AwesomeOracleSQLPlanVisualizer
 
+[![Java](https://img.shields.io/badge/Java-8+-orange?logo=java)](https://www.oracle.com/java/)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
 一个基于 Java Swing 的 Oracle 执行计划可视化分析工具。
 
 用于将数据库控制台导出的执行计划文本（EXPLAIN PLAN / DBMS_XPLAN 输出）转换为树形结构展示，并支持节点属性查看与执行顺序分析 **（串行模式）**。
@@ -38,23 +41,23 @@
 ## 📂 项目结构
 
 ```tree
-com.example
+<root project>
 │
-├── core                  // 核心逻辑模块
+├── com.example.core                  // 核心逻辑模块
 │   ├── PlanNode.java     // 执行计划节点类
 │   ├── PlanParser.java   // 执行计划解析器
 │   └── MainConsole.java  // 控制台主入口（可选）
 │
-├── ui                    // 用户界面模块
+├── com.example.ui                    // 用户界面模块
 │   ├── MainFrame.java    // 主窗口类
 │   ├── PlanVisualizer.java // 执行计划可视化面板
 │   ├── DetailPanel.java  // 节点详情展示面板
 │   └── PlanTreeRenderer.java // 树形渲染器
 │
-├── util                  // 工具类模块
-│   └── (未来可扩展的工具类)
+├── resources                  // 静态资源
+│   └── plan.txt
 │
-└── AppLauncher.java      // 应用启动类
+└── com.example.AppLauncher.java      // 应用启动类
 ```
 
 ## ⚙️ 运行环境要求
@@ -62,11 +65,12 @@ com.example
 | 组件         | 版本                    | 说明                     |
 | ------------ | ----------------------- | ------------------------ |
 | **操作系统** | Windows / macOS / Linux | 全平台64位支持           |
-| **Java**     | **JDK>= 8**             | 推荐使用JDK8，内置JavaFX |
+| **Java**     | **JDK>= 8**             | 推荐使用JDK9+，兼容高分辨率   |
+| **执行计划 重要！！** |  由**Oracle SQL Developer**生成的执行计划         | 输入格式参考[模板文件](./src/resources/template/plan.txt) |
 
 ## 🚀 快速开始（GUI模式）
 
-推荐通过 `JRE`环境 和 下载 `SplitAndCombineFile.jar` 运行
+推荐通过 `JRE`环境 和 下载 `AwesomeOracleSQLPlanVisualizer.jar` 运行
 
 ### Windows / MacOS 平台
 
@@ -91,5 +95,5 @@ export DISPLAY=<客户端IP>:0.0
 3. 终端执行：
 
   ```bash
-java -Dprism.order=sw -jar <AwesomeOracleSQLPlanVisualizer.jar完整路径>
+java -jar <AwesomeOracleSQLPlanVisualizer.jar完整路径>
   ```
