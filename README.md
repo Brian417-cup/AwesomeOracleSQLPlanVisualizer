@@ -66,8 +66,7 @@
 | ------------ | ----------------------- | ------------------------ |
 | **操作系统** | Windows / macOS / Linux | 全平台64位支持           |
 | **Java**     | **JDK>= 8**             | 推荐使用JDK9+，兼容高分辨率   |
-| **执行计划
-重要！！** |  由 [Oracle SQL Developer](https://www.oracle.com/cn/database/sqldeveloper/) 生成的执行计划         | 输入格式参考[模板文件](./src/resources/template/plan.txt) |
+| **执行计划（重要！！）** |  由 [Oracle SQL Developer](https://www.oracle.com/cn/database/sqldeveloper/) 生成的执行计划         | 输入格式参考[模板文件](./src/resources/template/plan.txt) |
 
 ## 🚀 快速开始（GUI模式）
 

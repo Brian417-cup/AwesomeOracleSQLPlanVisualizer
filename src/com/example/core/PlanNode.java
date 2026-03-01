@@ -1,7 +1,9 @@
 package com.example.core;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class PlanNode {
 
@@ -18,6 +20,9 @@ public class PlanNode {
     private boolean hasPredicate;
     private int level;
     private String rawLine;
+    // 添加动态属性存储
+    private Map<String, String> dynamicProperties = new HashMap();
+
 
     private List<PlanNode> children = new ArrayList<>();
 
@@ -170,8 +175,54 @@ public class PlanNode {
         this.children.add(child);
     }
 
+    /**
+     * 设置动态属性
+     */
+    public void setDynamicProperty(String key, String value) {
+        if (key != null && !key.trim().isEmpty()) {
+            dynamicProperties.put(key.trim(), value != null ? value : "");
+        }
+    }
+
+    /**
+     * 获取动态属性
+     */
+    public String getDynamicProperty(String key) {
+        return dynamicProperties.getOrDefault(key, "");
+    }
+
+    /**
+     * 获取所有动态属性
+     */
+    public Map<String, String> getDynamicProperties() {
+        return new HashMap<>(dynamicProperties);
+    }
+
+    /**
+     * 检查是否存在指定的动态属性
+     */
+    public boolean hasDynamicProperty(String key) {
+        return dynamicProperties.containsKey(key);
+    }
+
+
     @Override
     public String toString() {
-        return (hasPredicate ? "* " : "") + id + " - " + operation;
+        StringBuilder sb = new StringBuilder();
+        sb.append(hasPredicate ? "* " : "").append(id).append(" - ").append(operation);
+
+        // 添加动态属性信息（仅用于调试）
+        if (!dynamicProperties.isEmpty()) {
+            sb.append(" [");
+            boolean first = true;
+            for (Map.Entry<String, String> entry : dynamicProperties.entrySet()) {
+                if (!first) sb.append(", ");
+                sb.append(entry.getKey()).append("=").append(entry.getValue());
+                first = false;
+            }
+            sb.append("]");
+        }
+
+        return sb.toString();
     }
 }

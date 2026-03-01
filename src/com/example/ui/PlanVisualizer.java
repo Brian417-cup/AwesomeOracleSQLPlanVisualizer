@@ -1,6 +1,8 @@
 package com.example.ui;
 
+import com.example.core.DynamicColumnInfo;
 import com.example.core.PlanNode;
+import com.example.core.PlanParser;
 
 import javax.swing.*;
 import javax.swing.tree.*;
@@ -10,16 +12,19 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 
 public class PlanVisualizer extends JPanel {
 
     private JTree tree;
     private JTable table;
     private DefaultTableModel tableModel;
-    private JTextArea executionOrderArea;
     private JTable executionOrderTable;
     private DefaultTableModel executionOrderTableModel;
     private List<PlanNode> executionOrderList; // 保存执行顺序列表
+    // 动态列信息引用
+    private DynamicColumnInfo dynamicColumnInfo;
 
 
     public PlanVisualizer() {
@@ -103,6 +108,12 @@ public class PlanVisualizer extends JPanel {
             return;
         }
 
+        // 获取动态列信息
+        dynamicColumnInfo = PlanParser.getDynamicColumnInfo();
+
+        // 重新构建表格模型以适应动态列
+        rebuildTableModel();
+
         DefaultMutableTreeNode swingRoot = buildTreeNode(root);
         tree.setModel(new DefaultTreeModel(swingRoot));
 
@@ -111,6 +122,28 @@ public class PlanVisualizer extends JPanel {
 //        右下方展示串行状态下的执行计划顺序
         generateExecutionOrder(root);
     }
+
+    /**
+     * 重新构建表格模型以适应动态列
+     */
+    private void rebuildTableModel() {
+        if (dynamicColumnInfo == null) {
+            return;
+        }
+
+        // 获取按顺序排列的列名
+        List<String> orderedColumns = dynamicColumnInfo.getOrderedColumns();
+
+        // 创建新的表格模型
+        String[] columns = {"属性", "值"};
+        tableModel = new DefaultTableModel(columns, 0);
+        table.setModel(tableModel);
+
+        // 调整列宽
+        table.getColumnModel().getColumn(0).setMinWidth(130);
+        table.getColumnModel().getColumn(0).setMaxWidth(150);
+    }
+
 
     //    树形控件节点点击事件
     private void onNodeSelected() {
@@ -127,17 +160,42 @@ public class PlanVisualizer extends JPanel {
         // 清空旧数据
         tableModel.setRowCount(0);
 
-        // 添加新数据
-        addRow("Id", planNode.getId());
-        addRow("Operation", planNode.getOperation());
-        addRow("Name", planNode.getName());
-        addRow("Rows", planNode.getRows());
-        addRow("Bytes", planNode.getBytes());
-        addRow("Cost", planNode.getCost());
-        addRow("Time", planNode.getTime());
-        addRow("TQ", planNode.getTq());
-        addRow("IN-OUT", planNode.getInOut());
-        addRow("PQ Distrib", planNode.getPqDistrib());
+
+        // 获取动态列信息
+        if (dynamicColumnInfo != null) {
+            List<String> orderedColumns = dynamicColumnInfo.getOrderedColumns();
+
+            // 按顺序添加所有检测到的列
+            Map<String, Function<PlanNode, String>> getters =
+                    DynamicColumnInfo.getColumnValueGetters();
+
+            for (String columnName : orderedColumns) {
+                String value = "";
+
+                // 尝试使用预定义的getter
+                java.util.function.Function<PlanNode, String> getter = getters.get(columnName);
+                if (getter != null) {
+                    value = getter.apply(planNode);
+                } else {
+                    // 使用动态属性
+                    value = planNode.getDynamicProperty(columnName);
+                }
+
+                addRow(columnName, value != null ? value : "");
+            }
+        } else {
+            // 回退到原来的硬编码方式
+            addRow("Id", planNode.getId());
+            addRow("Operation", planNode.getOperation());
+            addRow("Name", planNode.getName());
+            addRow("Rows", planNode.getRows());
+            addRow("Bytes", planNode.getBytes());
+            addRow("Cost", planNode.getCost());
+            addRow("Time", planNode.getTime());
+            addRow("TQ", planNode.getTq());
+            addRow("IN-OUT", planNode.getInOut());
+            addRow("PQ Distrib", planNode.getPqDistrib());
+        }
 
         // 查找并高亮执行顺序表格中的对应行
         int rowIndex = executionOrderList.indexOf(planNode);
